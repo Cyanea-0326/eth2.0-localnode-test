@@ -1,0 +1,34 @@
+{
+	"config": {
+	  "chainId": 1337,
+	  "homesteadBlock": 0,
+	  "daoForkBlock": 0,
+	  "eip150Block": 0,
+	  "eip155Block": 0,
+	  "eip158Block": 0,
+	  "byzantiumBlock": 0,
+	  "constantinopleBlock": 0,
+	  "petersburgBlock": 0,
+	  "istanbulBlock": 0,
+	  "muirGlacierBlock": 0,
+	  "berlinBlock": 0,
+	  "londonBlock": 0,
+	  "arrowGlacierBlock": 0,
+	  "grayGlacierBlock": 0,
+	  "mergeNetsplitBlock": 0,
+	  "shanghaiBlock": 0,
+	  "cancunBlock": 0,
+	  "chainConfig": {
+		"eip1559": true,
+		"baseFeePerGas": "1000000000"
+	  }
+	},
+	"alloc": {},
+	"nonce": "0x0",
+	"timestamp": "0x00",
+	"extraData": "0x00",
+	"gasLimit": "0xFFFFFFFFFF",
+	"difficulty": "0x1",
+	"mixhash": "0x00",
+	"coinbase": "0x0000000000000000000000000000000000000000"
+}

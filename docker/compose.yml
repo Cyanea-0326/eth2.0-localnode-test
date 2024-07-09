@@ -1,0 +1,146 @@
+x-logging: &logging
+  logging:
+    driver: "json-file"
+    options:
+      max-file: "10"
+      max-size: "100m"
+
+services:
+  # uri-server:
+  #   build:
+  #     context: ./URI-server
+  #     dockerfile: Dockerfile
+  #   container_name: URI-server
+  #   ports:
+  #     - "5001:5000"
+  #   volumes:
+  #     - ./URI-server/host_images:/host_images
+  #   <<: *logging
+
+  geth:
+    image: ethereum/client-go:latest
+    container_name: execution-layer
+    restart: unless-stopped
+    ports:
+      - "8551:8551"  # AuthRPC ポート
+      - "8545:8545"  # HTTP RPCポート
+      - "8546:8546"  # gRPCポート
+      - "30303:30303"
+      - "30303:30303/udp"
+    volumes:
+      - ./geth:/root/.ethereum
+      - ../src/json/genesis.json:/root/genesis.json
+      - ../src/jwt/jwtsecret:/execution/jwtsecret
+    stop_signal: SIGINT
+    stop_grace_period: 1m
+    healthcheck:
+      test: [ "CMD-SHELL", "geth attach --exec eth.blockNumber" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: 
+      - --authrpc.addr
+      - "0.0.0.0"
+      - --authrpc.port
+      - "8551"
+      - --authrpc.vhosts
+      - "*"
+      - --authrpc.jwtsecret=/execution/jwtsecret
+
+      - --http
+      - --http.port
+      - "8545"
+      - --http.api
+      - "eth,net,web3,engine,personal"
+      - --http.addr=0.0.0.0
+      - --http.vhosts=*
+      - --http.corsdomain=*
+
+      - --ws
+      - --ws.port
+      - "8546"
+      - --ws.api
+      - "eth,net,web3,engine,personal"
+      - --ws.addr=0.0.0.0
+      - --ws.origins=*
+
+      - --cache=2048 # should be 34% of RAM
+      - --syncmode
+      - "full"
+      - --ipcpath
+      - "/root/.ethereum/geth.ipc"
+      - --allow-insecure-unlock
+      - --networkid
+      - "1337"
+      - --bootnodes=
+    networks:
+      - iuc_network
+    <<: *logging
+
+  prysm-beacon:
+    image: gcr.io/prysmaticlabs/prysm/beacon-chain:latest
+    container_name: prysm-beaconchain
+    restart: unless-stopped
+    stop_signal: SIGINT
+    stop_grace_period: 1m
+    depends_on:
+      geth:
+        condition: service_healthy
+    volumes:
+      - ./prysm-beacon:/data
+      - ../src/yaml/beacon-config.yaml:/data/config.yaml
+      - ../src/jwt/jwtsecret:/jwtsecret
+    ports:
+      - "4000:4000"
+      - "12000:12000/udp"
+      - "13000:13000"
+    command:
+      - --accept-terms-of-use
+      - --deposit-contract=
+      - --contract-deployment-block=0
+      - --datadir=/data
+      - --rpc-host=0.0.0.0
+      - --monitoring-host=0.0.0.0
+      - --execution-endpoint=http://execution-layer:8551
+      - --jwt-secret=/jwtsecret
+      - --p2p-host-ip=192.168.64.1
+    # --suggested-fee-recipient=<YOUR_ETH_ADDRESS> 提案者手数料を受け取る Ethereum アドレス
+    networks:
+      - iuc_network
+    <<: *logging
+
+  prysm-validator:
+    image: gcr.io/prysmaticlabs/prysm/validator:latest
+    container_name: prysm-validator
+    restart: "no"
+    volumes:
+      - ./prysm-validator:/data
+      - ../src/yaml/validator-config.yaml:/config/config.yaml
+      - ../src/keystore:/data/keystore
+      - ../src/wallet:/var/lib/prysm/wallet
+    ports:
+      - "7500:7500"
+    depends_on:
+      - geth
+      - prysm-beacon
+    networks:
+      - iuc_network
+    command:
+      # - --datadir=/data
+      - --mainnet=false
+      - --beacon-rpc-provider=prysm-beacon:4000
+      - --wallet-dir=/var/lib/prysm/wallet
+      - --wallet-password-file=/var/lib/prysm/wallet/password.txt
+      - --accept-terms-of-use
+
+networks:
+  iuc_network:
+    driver: bridge
+
+
+# networks:
+#   default:
+#     ipam:
+#       driver: default
+#       config:
+#         - subnet: 99.97.0.0/16

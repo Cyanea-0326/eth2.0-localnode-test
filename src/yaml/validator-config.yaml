@@ -1,0 +1,12 @@
+# Validator Configurations
+validator:
+  # Configurations for validators
+
+# Logging Configurations
+logging:
+  level: debug
+
+keymanager_kind: derived
+wallet_dir: /wallet
+wallet_password_file: /password.txt
+accept_terms_of_use: true

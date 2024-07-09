@@ -1,0 +1,27 @@
+network:
+  chain-id: 1337     # ネットワークID
+  # active-validators: 2000    # アクティブなバリデーター数
+  # min-validators: 1    # 最小バリデーター数
+
+# ノード設定
+node:
+  address: 0.0.0.0:4004
+  # ピアアドレス
+  bootnodes:
+    - enode://1234567890abcdef1234567890abcdef1234567890abcdef1234567890@127.0.0.1:4004
+    - enode://0000000000000000000000000000000000000000000000000000000000000000@127.0.0.1:4005
+
+# データディレクトリ設定
+chain-dir: /data    # データディレクトリ
+
+# RPC 設定
+rpc:
+  # RPC アドレス
+  address: 0.0.0.0:5052
+  # Web3 プロバイダー
+  http-web3-provider: http://localhost:8551
+
+# gRPC ゲートウェイ設定
+grpc-gateway:
+  # gRPC ゲートウェイ ポート
+  port: 4000
